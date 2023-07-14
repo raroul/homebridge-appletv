@@ -35,13 +35,14 @@ export class AppleTVAccessory {
     this.services.push(this.powerStateService);
     this.powerStateService.getCharacteristic(this.platform.Characteristic.On)
       .onSet(this.setOn.bind(this));
+    this.platform.log.debug('Register to update:powerState')
     this.atv.on('update:powerState', (event: NodePyATVDeviceEvent | Error) => {
       if (event instanceof Error) {
-        this.platform.log.debug('Error updating power state', event);
+        this.platform.log.debug('Error updating power state', event?.name, event?.message);
         return;
       }
-      this.platform.log.debug('update:powerState', event?.newValue);
       this.powerStateService.getCharacteristic(this.platform.Characteristic.On).updateValue(event.newValue === NodePyATVPowerState.on);
+      this.platform.log.debug('update:powerState', event?.newValue);
     });
 
     if (!this.accessory.context.device.generic_sensors) {
