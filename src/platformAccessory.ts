@@ -13,7 +13,7 @@ export class AppleTVAccessory {
   private services: Service[] = [];
   private powerStateService: Service;
   private genericServices: { [property: string]: { [value: string]: Service } } = {};
-  private updatePowerState: (powerState: NodePyATVEventValueType) => void;
+  private debounceUpdatePowerState: (powerState: NodePyATVEventValueType) => void;
 
   constructor(
     private readonly platform: AppleTVPlatform,
@@ -26,10 +26,9 @@ export class AppleTVAccessory {
       companionCredentials: this.accessory.context.device.credentials,
     });
 
-    this.updatePowerState = debounce(30000, (powerState: NodePyATVEventValueType) => {
-        this.platform.log.debug('update:powerState', powerState);
-        this.powerStateService.getCharacteristic(this.platform.Characteristic.On).updateValue(powerState === NodePyATVPowerState.on);
-      }, {atBegin: true})
+    this.debounceUpdatePowerState = debounce(this.accessory.context.device.debouncePowerStateDelay, (powerState: NodePyATVEventValueType) => {
+      this.updatePowerState(powerState);
+    }, {atBegin: true})
 
     this.services.push(this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Apple Inc.')
@@ -48,7 +47,8 @@ export class AppleTVAccessory {
         this.platform.log.debug('Error updating power state', event?.name, event?.message);
         return;
       }
-      this.updatePowerState(event.newValue);
+      typeof this.accessory.context.device.debouncePowerStateDelay === "number" ? 
+        this.debounceUpdatePowerState(event.newValue) : this.updatePowerState(event.newValue);
     });
 
     if (!this.accessory.context.device.generic_sensors) {
@@ -104,5 +104,10 @@ export class AppleTVAccessory {
   async setOn(value: CharacteristicValue) {
     value ? await this.atv.turnOn() : await this.atv.turnOff();
     this.platform.log.debug('Set Characteristic On ->', value);
+  }
+
+  updatePowerState(powerState: NodePyATVEventValueType) {
+    this.platform.log.debug('update:powerState', powerState);
+    this.powerStateService.getCharacteristic(this.platform.Characteristic.On).updateValue(powerState === NodePyATVPowerState.on);
   }
 }
