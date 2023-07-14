@@ -96,6 +96,7 @@ export class AppleTVAccessory {
    */
   async setOn(value: CharacteristicValue) {
     value ? await this.atv.turnOn() : await this.atv.turnOff();
+    this.platform.log.debug('Set Characteristic On ->', value);
   }
 
 }
