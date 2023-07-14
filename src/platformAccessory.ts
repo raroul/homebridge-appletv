@@ -1,4 +1,5 @@
-import pyatv, { NodePyATVDevice, NodePyATVDeviceEvent, NodePyATVPowerState } from '@sebbo2002/node-pyatv';
+import pyatv, { NodePyATVDevice, NodePyATVDeviceEvent, NodePyATVEventValueType, NodePyATVPowerState } from '@sebbo2002/node-pyatv';
+import { debounce } from 'throttle-debounce';
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { AppleTVPlatform } from './platform';
@@ -12,6 +13,7 @@ export class AppleTVAccessory {
   private services: Service[] = [];
   private powerStateService: Service;
   private genericServices: { [property: string]: { [value: string]: Service } } = {};
+  private updatePowerState: (powerState: NodePyATVEventValueType) => void;
 
   constructor(
     private readonly platform: AppleTVPlatform,
@@ -23,6 +25,11 @@ export class AppleTVAccessory {
       airplayCredentials: this.accessory.context.device.credentials,
       companionCredentials: this.accessory.context.device.credentials,
     });
+
+    this.updatePowerState = debounce(30000, (powerState: NodePyATVEventValueType) => {
+        this.platform.log.debug('update:powerState', powerState);
+        this.powerStateService.getCharacteristic(this.platform.Characteristic.On).updateValue(powerState === NodePyATVPowerState.on);
+      }, {atBegin: true})
 
     this.services.push(this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Apple Inc.')
@@ -41,8 +48,7 @@ export class AppleTVAccessory {
         this.platform.log.debug('Error updating power state', event?.name, event?.message);
         return;
       }
-      this.powerStateService.getCharacteristic(this.platform.Characteristic.On).updateValue(event.newValue === NodePyATVPowerState.on);
-      this.platform.log.debug('update:powerState', event?.newValue);
+      this.updatePowerState(event.newValue);
     });
 
     if (!this.accessory.context.device.generic_sensors) {
@@ -99,5 +105,4 @@ export class AppleTVAccessory {
     value ? await this.atv.turnOn() : await this.atv.turnOff();
     this.platform.log.debug('Set Characteristic On ->', value);
   }
-
 }
