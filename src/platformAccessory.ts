@@ -164,8 +164,14 @@ export class AppleTVAccessory {
 
   updatePowerState(powerState: NodePyATVEventValueType) {
     this.platform.log.debug("update:powerState", powerState);
-    this.powerStateService
-      .getCharacteristic(this.platform.Characteristic.On)
-      .updateValue(powerState === NodePyATVPowerState.on);
+    // Prevent power state update with incorrect value to have an effect "null" for example.
+    if (
+      powerState === NodePyATVPowerState.on ||
+      powerState === NodePyATVPowerState.off
+    ) {
+      this.powerStateService
+        .getCharacteristic(this.platform.Characteristic.On)
+        .updateValue(powerState === NodePyATVPowerState.on);
+    }
   }
 }
