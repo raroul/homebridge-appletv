@@ -4,7 +4,7 @@ import pyatv, {
   NodePyATVEventValueType,
   NodePyATVPowerState,
 } from "@sebbo2002/node-pyatv";
-import { debounce } from "perfect-debounce";
+import { debounce } from "throttle-debounce";
 import { Service, PlatformAccessory, CharacteristicValue } from "homebridge";
 
 import { AppleTVPlatform } from "./platform";
@@ -46,11 +46,11 @@ export class AppleTVAccessory {
     );
 
     this.debounceUpdatePowerState = debounce(
+      this.accessory.context.device.debouncePowerStateDelay,
       (powerState: NodePyATVEventValueType) => {
         this.updatePowerState(powerState);
       },
-      this.accessory.context.device.debouncePowerStateDelay,
-      { leading: true, trailing: true }
+      { atBegin: true }
     );
 
     this.services.push(

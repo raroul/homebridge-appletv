@@ -27,6 +27,7 @@
   ],
   "devDependencies": {
     "@types/node": "^16.10.9",
+    "@types/throttle-debounce": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.0.1",
@@ -38,6 +39,6 @@
   },
   "dependencies": {
     "@sebbo2002/node-pyatv": "^4.3.3",
-    "perfect-debounce": "^1.0.0"
+    "throttle-debounce": "^5.0.0"
   }
 }
