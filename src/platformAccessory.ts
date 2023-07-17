@@ -49,8 +49,7 @@ export class AppleTVAccessory {
       this.accessory.context.device.debouncePowerStateDelay,
       (powerState: NodePyATVEventValueType) => {
         this.updatePowerState(powerState);
-      },
-      { atBegin: true }
+      }
     );
 
     this.services.push(
